@@ -54,19 +54,28 @@ export default function App() {
   };
 
   // Ensure URL implies http/https for iframe
-  const iframeUrl = state.lead?.url.startsWith('http') ? state.lead.url : `https://${state.lead?.url}`;
+  const rawUrl = state.lead?.url.startsWith('http') ? state.lead.url : `https://${state.lead?.url}`;
+  const iframeUrl = `/api/proxy?url=${encodeURIComponent(rawUrl)}`;
+
+  // Extract a clean business name from URL
+  const domainName = state.lead?.url ? state.lead.url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0] : 'your company';
 
   // Agent Prompt
-  const systemInstruction = `You are a professional, automated AI voice agent acting as a customer service and sales representative for the website "${state.lead?.url}".
-The prospect testing the demo is named "${state.lead?.name}".
-CRITICAL INSTRUCTION: As soon as you connect, start the conversation by enthusiastically greeting the prospect by their name, announce that you are transforming into "demo mode now for 5 minutes", and invite them to ask questions about their business/website to test your knowledge! Let them know they can say "end demo" when finished.
+  const systemInstruction = `You are a professional, automated AI voice agent acting as a customer service and sales representative for "${domainName}".
+
+CRITICAL STARTING INSTRUCTION: As soon as the connection opens, you MUST start the conversation with EXACTLY this greeting (say it warmly with a smile):
+"Thank you for connecting with ${domainName}. Hi ${state.lead?.name}, I'm here to walk you through our services and answer any questions you may have - How may I help you today?"
 
 Use the following real knowledge scraped live from their website to answer their questions accurately. Do not hallucinate features they do not have.
 --- SCRAPED KNOWLEDGE BASE ---
 ${state.scrapedKnowledge}
 --- END SCRAPED KNOWLEDGE BASE ---
 
-Keep your answers extremely concise and conversational, suitable for voice output.`;
+CRITICAL CLOSING INSTRUCTION: If the user explicitly says "end demo", OR if the user is completely silent and pauses for a long time (about 45 seconds), OR if the demo time limit is reached, you MUST end the conversation by saying EXACTLY this:
+"Bye. This completes your virtual agent demo. Feedback helps us improve my performance, so please let us know how I did. Thank you for contacting us here at ${domainName}!"
+Do not ask any follow up questions after the closing statement.
+
+Keep your answers extremely concise, natural, and conversational, suitable for voice output.`;
 
   return (
     <div className="w-full h-screen relative bg-zinc-950 font-sans overflow-hidden">
@@ -133,29 +142,13 @@ Keep your answers extremely concise and conversational, suitable for voice outpu
 
       {state.step === 'demo' && (
         <div className="absolute inset-0 z-10">
-           {/* Simulate website using Iframe or fallback */}
-           {!state.iframeBlocked ? (
-             <iframe 
-                src={iframeUrl} 
-                className="w-full h-full border-none"
-                title="Prospect Website Replica"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-             />
-           ) : (
-             <div className="w-full h-full bg-zinc-900 flex flex-col items-center justify-center relative">
-                {/* Fallback image when iframe is blocked by X-Frame-Options */}
-                <img 
-                  src="https://picsum.photos/seed/fallback/1920/1080?blur=2" 
-                  alt="Iframe Fallback" 
-                  className="absolute inset-0 w-full h-full object-cover opacity-60" 
-                  referrerPolicy="no-referrer"
-                />
-                <div className="relative z-10 bg-black/60 backdrop-blur border border-white/20 p-8 rounded-2xl max-w-lg text-center">
-                   <h2 className="text-2xl font-bold text-white mb-2">Simulated Demo Environment</h2>
-                   <p className="text-white/80">Your website's security prevents it from being embedded here, but the AI Voice Agent is fully functional and has scraped your website's data. Test it now!</p>
-                </div>
-             </div>
-           )}
+           {/* Mirror website using our proxy backend to bypass security blocks */}
+           <iframe 
+              src={iframeUrl} 
+              className="w-full h-full border-none"
+              title="Prospect Website Mirror"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+           />
 
            {/* AI Voice Agent Overlay */}
            <VoiceAgent 

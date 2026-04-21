@@ -72,6 +72,55 @@ async function startServer() {
     }
   });
 
+  // Proxy Route to bypass Iframe restrictions (X-Frame-Options)
+  app.get('/api/proxy', async (req, res) => {
+    try {
+      const { url } = req.query;
+      if (!url || typeof url !== 'string') {
+        return res.status(400).send('URL is required');
+      }
+
+      const response = await axios.get(url, { 
+        timeout: 10000,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
+
+      let html = response.data;
+      const $ = cheerio.load(html);
+
+      // Fix relative paths by injecting a <base> tag
+      if ($('head').length > 0) {
+        $('head').prepend(`<base href="${url}">`);
+      } else {
+        html = `<head><base href="${url}"></head>` + html;
+      }
+
+      // Optional: Strip any <meta> or <script> that attempts to frame-break
+      $('script').each((i, el) => {
+        const content = $(el).html() || '';
+        if (content.includes('window.top') || content.includes('top.location')) {
+          $(el).remove();
+        }
+      });
+
+      res.setHeader('Content-Type', 'text/html');
+      res.send($.html());
+    } catch (error: any) {
+      console.error('Proxy error:', error.message);
+      res.status(500).send(`
+        <div style="background: #18181b; color: white; height: 100vh; display: flex; align-items: center; justify-content: center; font-family: sans-serif; text-align: center; padding: 20px;">
+          <div>
+            <h1 style="font-size: 24px; margin-bottom: 10px;">Unable to Mirror Website Live</h1>
+            <p style="color: #a1a1aa;">The website at <b>${req.query.url}</b> is blocking our secure preview or is currently unreachable.</p>
+            <p style="margin-top: 20px; font-size: 14px;">The AI Voice Agent is still ready to assist you!</p>
+          </div>
+        </div>
+      `);
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

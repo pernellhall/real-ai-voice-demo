@@ -21,9 +21,10 @@ export function useLiveAPI(systemInstruction: string) {
     if (isConnected) return;
 
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY; // Actually the API key is injected server-side or available via process.env.GEMINI_API_KEY if we use Vite's define. Notice vite.config.ts has define for `process.env.GEMINI_API_KEY`.
+      const meta = import.meta as any;
+      const apiKey = meta.env.VITE_GEMINI_API_KEY || (process as any).env.GEMINI_API_KEY; 
       
-      const ai = new GoogleGenAI({ apiKey: (window as any).process?.env?.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY });
+      const ai = new GoogleGenAI({ apiKey: (window as any).process?.env?.GEMINI_API_KEY || meta.env.VITE_GEMINI_API_KEY || (process as any).env.GEMINI_API_KEY });
       
       const sessionPromise = ai.live.connect({
         model: "gemini-3.1-flash-live-preview",
