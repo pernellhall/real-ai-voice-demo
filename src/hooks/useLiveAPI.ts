@@ -1,7 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
 
-export function useLiveAPI(systemInstruction: string, onCheckoutTriggered?: () => void) {
+export function useLiveAPI(systemInstruction: string) {
   const [isConnected, setIsConnected] = useState(false);
   const [isMicrophoneActive, setIsMicrophoneActive] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -22,27 +22,15 @@ export function useLiveAPI(systemInstruction: string, onCheckoutTriggered?: () =
 
     try {
       const meta = import.meta as any;
+      const apiKey = meta.env.VITE_GEMINI_API_KEY || (process as any).env.GEMINI_API_KEY; 
       
-      // Safe access to process to avoid ReferenceError in browsers
-      const processEnv = typeof process !== 'undefined' ? process.env : {};
-      const apiKey = meta.env?.VITE_GEMINI_API_KEY || (processEnv as any).GEMINI_API_KEY; 
-      
-      const windowProcess = (window as any).process;
-      const ai = new GoogleGenAI({ apiKey: windowProcess?.env?.GEMINI_API_KEY || meta.env?.VITE_GEMINI_API_KEY || (processEnv as any).GEMINI_API_KEY });
+      const ai = new GoogleGenAI({ apiKey: (window as any).process?.env?.GEMINI_API_KEY || meta.env.VITE_GEMINI_API_KEY || (process as any).env.GEMINI_API_KEY });
       
       const sessionPromise = ai.live.connect({
         model: "gemini-3.1-flash-live-preview",
         config: {
           responseModalities: [Modality.AUDIO],
           systemInstruction,
-          tools: [{
-            functionDeclarations: [
-              {
-                name: 'triggerCheckout',
-                description: 'Displays the Stripe Checkout button on the user screen. Call this ONLY when the user explicitly agrees to purchase or says they are "IN" and ready to move forward.',
-              }
-            ]
-          }],
           speechConfig: {
             voiceConfig: { prebuiltVoiceConfig: { voiceName: "Zephyr" } },
           },
@@ -53,38 +41,12 @@ export function useLiveAPI(systemInstruction: string, onCheckoutTriggered?: () =
             await setupAudioCapture(sessionPromise);
           },
           onmessage: (message: LiveServerMessage) => {
-            // Handle audio output
             const base64Audio = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
             if (base64Audio) {
               queueAudioPlayback(base64Audio);
             }
             if (message.serverContent?.interrupted) {
               playQueueRef.current = [];
-            }
-            // Handle tool calls
-            const parts = message.serverContent?.modelTurn?.parts;
-            if (parts) {
-               for (const part of parts) {
-                  if (part.functionCall && part.functionCall.name === 'triggerCheckout') {
-                     if (onCheckoutTriggered) onCheckoutTriggered();
-                     
-                     // Immediately send tool response
-                     const toolResponse = {
-                       clientContent: {
-                         turnComplete: true,
-                         turns: [{
-                           parts: [{
-                             functionResponse: {
-                               name: 'triggerCheckout',
-                               response: { status: 'success', message: 'Checkout button is now displayed on screen.' }
-                             }
-                           }]
-                         }]
-                       }
-                     };
-                     sessionPromise.then((session: any) => session.send(toolResponse));
-                  }
-               }
             }
           },
           onclose: () => {

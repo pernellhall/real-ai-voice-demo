@@ -5,12 +5,11 @@ import { Loader2, ArrowRight } from 'lucide-react';
 import axios from 'axios';
 
 export default function App() {
-  const [state, setState] = useState<DemoState & { showCheckout?: boolean }>({
+  const [state, setState] = useState<DemoState>({
     step: 'capture',
     lead: null,
     scrapedKnowledge: '',
     iframeBlocked: false,
-    showCheckout: false,
   });
 
   const [loading, setLoading] = useState(false);
@@ -49,14 +48,9 @@ export default function App() {
       step: 'capture',
       lead: null,
       scrapedKnowledge: '',
-      iframeBlocked: false,
-      showCheckout: false,
+      iframeBlocked: false
     });
     setFormData({ name: '', phone: '', url: '' });
-  };
-
-  const handleCheckoutTriggered = () => {
-    setState(prev => ({ ...prev, showCheckout: true }));
   };
 
   // Ensure URL implies http/https for iframe
@@ -66,31 +60,18 @@ export default function App() {
   // Extract a clean business name from URL
   const domainName = state.lead?.url ? state.lead.url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0] : 'your company';
 
-  // Agent Prompt - Founder-Led Close Persona
+  // Agent Prompt
   const systemInstruction = `You are a professional, automated AI voice agent acting as a customer service and sales representative for "${domainName}".
-You are adopting a "Founder-Led" closer persona. 
-
-YOUR PERSONA & BEHAVIOR:
-- Status: You are the Commander. You do not chase. You continue the Roadmap (Zero to Hero) and wait for their "I'M IN".
-- Tone: Extremely confident, empathetic but direct.
-- No Lead Nurturing: You are ONLY identifying with prospects who speak out and admit their own PAIN (e.g., missed calls, overworked, tied to the phone, tied to the business, inconsistent pipeline, fear things break if they aren't there, aware of changes needed but don't know how).
-- Convert Pain into Solution: Show empathy. Repeat their pain verbatim... pause, be silent, and wait for a reply. Then transition to their desired outcome with your Customer Value Proposition (CVP).
-- Price is Irrelevant: Position the price as an "Automation Investment" that pays for itself by capturing just one or two missed high-ticket customers.
-- Key Mentions required before closing: "Your AI automated system goes live in 48 hours. You work 1-on-1 directly with the founder and have access to the developer who designs, builds, and implements your App. This includes 30 days of VIP support followed by standard monthly support."
 
 CRITICAL STARTING INSTRUCTION: As soon as the connection opens, you MUST start the conversation with EXACTLY this greeting (say it warmly with a smile):
 "Thank you for connecting with ${domainName}. Hi ${state.lead?.name}, I'm here to walk you through our services and answer any questions you may have - How may I help you today?"
 
-Use the following real knowledge scraped live from their website to answer their questions accurately.
+Use the following real knowledge scraped live from their website to answer their questions accurately. Do not hallucinate features they do not have.
 --- SCRAPED KNOWLEDGE BASE ---
 ${state.scrapedKnowledge}
 --- END SCRAPED KNOWLEDGE BASE ---
 
-CRITICAL TOOL CLOSING: 
-If the user says "I'm in", agrees to buy, or asks how to pay, you MUST immediately call the 'triggerCheckout' tool/function to show them the stripe link.
-Tell them: "Excellent. I've just brought up the secure checkout button on your screen so we can get started right now."
-
-CRITICAL CLOSING INSTRUCTION: If the user explicitly says "end demo", OR if the user is completely silent and pauses for a long time (about 45 seconds), OR if the demo time limit is reached without them buying, you MUST end the conversation by saying EXACTLY this:
+CRITICAL CLOSING INSTRUCTION: If the user explicitly says "end demo", OR if the user is completely silent and pauses for a long time (about 45 seconds), OR if the demo time limit is reached, you MUST end the conversation by saying EXACTLY this:
 "Bye. This completes your virtual agent demo. Feedback helps us improve my performance, so please let us know how I did. Thank you for contacting us here at ${domainName}!"
 Do not ask any follow up questions after the closing statement.
 
@@ -101,15 +82,15 @@ Keep your answers extremely concise, natural, and conversational, suitable for v
       
       {state.step === 'capture' && (
         <div className="absolute inset-0 z-10 flex items-center justify-center">
-          {/* Tech/Neon Background Simulation using CSS Gradients & Dots */}
-          <div className="absolute inset-0 bg-[#070b19]">
-             <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, #1e1b4b 0%, transparent 50%), radial-gradient(circle at 80% 20%, #064e3b 0%, transparent 40%)' }}></div>
-             <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#3b82f6 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
-             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] mix-blend-screen pointer-events-none"></div>
-             <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[150px] mix-blend-screen pointer-events-none"></div>
-          </div>
+          {/* Main Site Background Image (User can replace placeholder) */}
+          <img 
+            src="https://picsum.photos/seed/agency/1920/1080?blur=4" 
+            alt="Background" 
+            className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay pointer-events-none" 
+            referrerPolicy="no-referrer"
+          />
           
-          <div className="relative z-20 w-full max-w-md bg-white/5 backdrop-blur-2xl border border-white/10 p-8 rounded-3xl shadow-2xl">
+          <div className="relative z-20 w-full max-w-md bg-white/10 backdrop-blur-2xl border border-white/20 p-8 rounded-3xl shadow-2xl">
             <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Experience AI.</h1>
             <p className="text-white/70 mb-8 font-medium">Enter your details and watch your website instantly transform into an interactive AI voice agent demo.</p>
 
@@ -154,9 +135,6 @@ Keep your answers extremely concise, natural, and conversational, suitable for v
                  {loading ? <Loader2 className="animate-spin w-5 h-5 text-blue-600" /> : 'Launch Demo'}
                  {!loading && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
                </button>
-               <div className="mt-4 text-center">
-                  <p className="text-[10px] text-white/20 font-mono uppercase tracking-[0.2em]">Build Version: 1.25.1</p>
-               </div>
             </form>
           </div>
         </div>
@@ -176,29 +154,7 @@ Keep your answers extremely concise, natural, and conversational, suitable for v
            <VoiceAgent 
              systemInstruction={systemInstruction}
              onEndDemo={endDemo}
-             onCheckoutTriggered={handleCheckoutTriggered}
            />
-
-           {/* Magic Pop-Up Stripe Checkout Button */}
-           {state.showCheckout && (
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 animate-fade-in-up">
-                <div className="bg-black/80 backdrop-blur-xl border border-blue-500/30 p-8 rounded-3xl shadow-[0_0_50px_rgba(59,130,246,0.3)] text-center max-w-sm w-full mx-auto">
-                   <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/50">
-                      <svg className="w-8 h-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                   </div>
-                   <h3 className="text-2xl font-bold text-white mb-2">Ready to Upgrade?</h3>
-                   <p className="text-blue-200/80 mb-6 font-medium text-sm">Secure your AI automated system right now.</p>
-                   <a 
-                     href="https://buy.stripe.com/4gM14e0i80Z47x5e7a57W0h" 
-                     target="_blank" 
-                     rel="noreferrer"
-                     className="block w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg hover:shadow-blue-500/25 cursor-pointer transform hover:-translate-y-0.5"
-                   >
-                      Proceed to Checkout
-                   </a>
-                </div>
-             </div>
-           )}
         </div>
       )}
 

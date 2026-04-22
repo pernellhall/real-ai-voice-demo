@@ -12,11 +12,10 @@ function cn(...inputs: ClassValue[]) {
 interface VoiceAgentProps {
   systemInstruction: string;
   onEndDemo: () => void;
-  onCheckoutTriggered?: () => void;
 }
 
-export const VoiceAgent: React.FC<VoiceAgentProps> = ({ systemInstruction, onEndDemo, onCheckoutTriggered }) => {
-  const { connect, disconnect, isConnected, volume } = useLiveAPI(systemInstruction, onCheckoutTriggered);
+export const VoiceAgent: React.FC<VoiceAgentProps> = ({ systemInstruction, onEndDemo }) => {
+  const { connect, disconnect, isConnected, volume } = useLiveAPI(systemInstruction);
   const [timeLeft, setTimeLeft] = useState(5 * 60); // 5 minutes demo
 
   useEffect(() => {
