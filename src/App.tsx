@@ -154,6 +154,9 @@ Keep your answers extremely concise, natural, and conversational, suitable for v
                  {loading ? <Loader2 className="animate-spin w-5 h-5 text-blue-600" /> : 'Launch Demo'}
                  {!loading && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
                </button>
+               <div className="mt-4 text-center">
+                  <p className="text-[10px] text-white/20 font-mono uppercase tracking-[0.2em]">Build Version: 1.25.1</p>
+               </div>
             </form>
           </div>
         </div>
