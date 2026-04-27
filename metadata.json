@@ -1,6 +1,8 @@
 {
-  "name": "Live AI Voice Demo Agent",
-  "description": "An interactive AI voice agent that captures lead info (Name, Phone, URL) and instantly transitions into a real-time 'Demo Mode' over a simulated iframe of the prospect's website.",
-  "requestFramePermissions": ["microphone"],
+  "name": "real-ai-voice-demo",
+  "description": "Fixing the audio and API key bug using pure Gemini Web Audio API baseline and Vite static key fix.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
   "majorCapabilities": []
 }

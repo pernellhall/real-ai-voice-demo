@@ -121,6 +121,11 @@ async function startServer() {
     }
   });
 
+  // Securely provide API Key at runtime
+  app.get('/api/credentials', (req, res) => {
+    res.json({ apiKey: process.env.GEMINI_API_KEY || '' });
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
